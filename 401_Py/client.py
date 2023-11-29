@@ -28,6 +28,10 @@ class PeerClient:
         print(response)
         return response
 
+    def send_get_request(self, rfc_number):
+        request = self.format_request('GET', rfc_number, None)
+        return self.send_request(request)    
+
     def send_add_request(self, rfc_number, title):
         request = self.format_request('ADD', rfc_number, title)
         return self.send_request(request)
@@ -46,10 +50,10 @@ class PeerClient:
         port_line = f"Port: {self.upload_port}\r\n"
         title_line = f"Title: {title}\r\n" if title else ""
         return request_line + host_line + port_line + title_line + "\r\n"
-
+    
     def execute_command(self):
         while True:
-            command = input("Enter command (ADD, LOOKUP, LIST, EXIT): ").strip().upper()
+            command = input("Enter command (ADD, LOOKUP, LIST, GET, EXIT): ").strip().upper()
             if command == 'ADD':
                 rfc_file_name = input("Enter the name of the RFC file (e.g., rcf1.txt): ")
                 self.add_rfc_from_file(rfc_file_name)
@@ -59,11 +63,28 @@ class PeerClient:
                 self.send_lookup_request(rfc_number, title)
             elif command == 'LIST':
                 self.send_list_request()
+            elif command == 'GET':
+                rfc_number = input("Enter RFC number to get: ").strip()
+                response = self.send_get_request(rfc_number)
+                if 'P2P-CI/1.0 200 OK' in response:
+                    self.save_rfc_file(rfc_number, response)
+                else:
+                    print("RFC not found.")
             elif command == 'EXIT':
                 print("Exiting...")
                 break
             else:
                 print("Invalid command. Please try again.")
+
+    def save_rfc_file(self, rfc_number, response):
+        # Check if the response header indicates that data is included
+        if '\r\n\r\n' in response:
+            data = response.split('\r\n\r\n', 1)[1]
+            with open(f'rfc{rfc_number}.txt', 'w') as file:
+                file.write(data)
+            print(f"RFC {rfc_number} downloaded successfully.")
+        else:
+            print("No data received to save.")
 
 if __name__ == "__main__":
     server_host = input("Enter the server IP address: ")
