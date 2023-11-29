@@ -1,5 +1,8 @@
 import socket
+from email.utils import formatdate
+from time import time
 import threading
+import platform
 
 class LinkedListNode:
     def __init__(self, data):
@@ -97,6 +100,28 @@ class Server:
                 headers[header_key] = header_value
 
         return method, rfc_number, version, headers
+
+    def handle_get(self, rfc_number, headers):
+        # Find the RFC in the index
+        rfc_record = self.rfc_index.find(lambda x: x[0] == int(rfc_number))
+        if rfc_record:
+            rfc_num, title, host = rfc_record
+            try:
+                with open(f'rfc{rfc_number}.txt', 'r') as file:
+                    data = file.read()
+                    response = f"P2P-CI/1.0 200 OK\r\nDate: {self.get_date()}\r\nOS: {self.get_os()}\r\nContent-Length: {len(data)}\r\nContent-Type: text/plain\r\n\r\n{data}"
+            except FileNotFoundError:
+                response = "P2P-CI/1.0 404 Not Found\r\n\r\n"
+        else:
+            response = "P2P-CI/1.0 404 Not Found\r\n\r\n"
+        return response
+
+    # Helper methods to get the current date and server OS
+    def get_date(self):
+        return formatdate(timeval=time(), localtime=False, usegmt=True)
+
+    def get_os(self):    
+        return f"{platform.system()} {platform.release()} {platform.version()}"
 
     def handle_add(self, rfc_number, headers):
         #get the host, port and title values
