@@ -1,0 +1,3 @@
+RFC 2: Basic Networking Concepts
+
+This RFC provides an overview of basic networking concepts, including the OSI model, IP addressing, routing protocols, and common networking devices like routers and switches.

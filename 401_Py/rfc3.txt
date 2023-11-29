@@ -1,0 +1,3 @@
+RFC 3: Overview of HTTP Protocol
+
+The HTTP (Hypertext Transfer Protocol) is the foundation of data communication on the World Wide Web. This document outlines the basic structure of HTTP requests and responses.
