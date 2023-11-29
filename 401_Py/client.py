@@ -1,3 +1,4 @@
+import random
 import socket
 
 class PeerClient:
@@ -18,7 +19,7 @@ class PeerClient:
 
     def connect_to_server(self):
         self.client_socket.connect((self.server_host, self.server_port))
-        print("Connected to server.")
+        print(f"Connected to server at {self.server_host}:{self.server_port}.")
 
     def send_request(self, message):
         self.client_socket.sendall(message.encode())
@@ -65,6 +66,9 @@ class PeerClient:
                 print("Invalid command. Please try again.")
 
 if __name__ == "__main__":
-    peer = PeerClient('localhost', 7734, 5678)  # Assuming 5678 is the peer's upload port
+    server_host = input("Enter the server IP address: ")
+    server_port = 7734  # Assuming the server port is 7734
+    upload_port = random.randint(1000, 9999)  # Random 4-digit port number for the client
+    peer = PeerClient(server_host, server_port, upload_port)
     peer.connect_to_server()
     peer.execute_command()
