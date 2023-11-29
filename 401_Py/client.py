@@ -77,19 +77,24 @@ class PeerClient:
                 print("Invalid command. Please try again.")
 
     def save_rfc_file(self, rfc_number, response):
-        # Check if the response header indicates that data is included
-        if '\r\n\r\n' in response:
-            data = response.split('\r\n\r\n', 1)[1]
-            with open(f'rfc{rfc_number}.txt', 'w') as file:
-                file.write(data)
-            print(f"RFC {rfc_number} downloaded successfully.")
-        else:
-            print("No data received to save.")
+        try:
+            if '\r\n\r\n' in response:
+                header, data = response.split('\r\n\r\n', 1)
+                with open(f'rfc{rfc_number}.txt', 'w') as file:
+                    file.write(data)
+                print(f"RFC {rfc_number} downloaded successfully.")
+            else:
+                print("Response did not contain data.")
+        except Exception as e:
+            print(f"Failed to save RFC {rfc_number}: {e}")
 
 if __name__ == "__main__":
-    server_host = input("Enter the server IP address: ")
-    server_port = 7734  # Assuming the server port is 7734
-    upload_port = random.randint(1000, 9999)  # Random 4-digit port number for the client
-    peer = PeerClient(server_host, server_port, upload_port)
-    peer.connect_to_server()
-    peer.execute_command()
+    try:
+        server_host = input("Enter the server IP address: ")
+        server_port = 7734  # Assuming the server port is 7734
+        upload_port = random.randint(1000, 9999)  # Random 4-digit port number for the client
+        peer = PeerClient(server_host, server_port, upload_port)
+        peer.connect_to_server()
+        peer.execute_command()
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
