@@ -46,16 +46,16 @@ class LinkedList:
 
 class Server:
     def __init__(self):
-        self.host = 'localhost'
+        self.host = '0.0.0.0'  # Listen on all network interfaces
         self.port = 7734
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.peers_list = LinkedList()  #client linked list
-        self.rfc_index = LinkedList()   #rfc linked list
+        self.peers_list = LinkedList()  # Client linked list
+        self.rfc_index = LinkedList()   # RFC linked list
 
     def start(self):
         self.server_socket.bind((self.host, self.port))
         self.server_socket.listen(5)
-        print(f"Server listening on port {self.port}")
+        print(f"Server listening on {self.host}:{self.port}")
 
         while True:
             client, address = self.server_socket.accept()
