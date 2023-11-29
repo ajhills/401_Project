@@ -66,22 +66,38 @@ class Server:
 
     def handle_client(self, client_socket):
         while True:
-            request = client_socket.recv(1024).decode()
-            print("Received request:", request)  #debug print
-            if not request:
-                break  #break if client ends connection
+            try:
+                request_data = []
+                while True:
+                    part = client_socket.recv(1024).decode()
+                    request_data.append(part)
+                    if len(part) < 1024:
+                        # Either 0 or end of data
+                        break
+                request = ''.join(request_data)
+                if not request:
+                    print("Client disconnected")
+                    break  # Client disconnected
 
-            method, rfc_number, version, headers = self.parse_request(request)
-            response = ''
-            if method == 'ADD':
-                response = self.handle_add(rfc_number, headers)
-            elif method == 'LOOKUP':
-                response = self.handle_lookup(rfc_number, headers)
-            elif method == 'LIST':
-                response = self.handle_list(headers)
+                print("Received request:", request)  # Debug print
+                method, rfc_number, version, headers = self.parse_request(request)
+                response = ''
+                if method == 'ADD':
+                    response = self.handle_add(rfc_number, headers)
+                elif method == 'LOOKUP':
+                    response = self.handle_lookup(rfc_number, headers)
+                elif method == 'LIST':
+                    response = self.handle_list(headers)
+                elif method == 'GET':
+                    response = self.handle_get(rfc_number, headers)
+                else:
+                    print(f"Unsupported method: {method}")
 
-            client_socket.sendall(response.encode())
-
+                client_socket.sendall(response.encode())
+            except Exception as e:
+                print(f"An error occurred while handling client request: {e}")
+                break
+            
     def parse_request(self, request):
         lines = request.split('\r\n')
         first_line = lines[0].split(' ')
@@ -102,18 +118,18 @@ class Server:
         return method, rfc_number, version, headers
 
     def handle_get(self, rfc_number, headers):
-        # Find the RFC in the index
-        rfc_record = self.rfc_index.find(lambda x: x[0] == int(rfc_number))
-        if rfc_record:
-            rfc_num, title, host = rfc_record
-            try:
-                with open(f'rfc{rfc_number}.txt', 'r') as file:
-                    data = file.read()
-                    response = f"P2P-CI/1.0 200 OK\r\nDate: {self.get_date()}\r\nOS: {self.get_os()}\r\nContent-Length: {len(data)}\r\nContent-Type: text/plain\r\n\r\n{data}"
-            except FileNotFoundError:
-                response = "P2P-CI/1.0 404 Not Found\r\n\r\n"
-        else:
+        # Assume rfc_number is valid and is an integer
+        try:
+            rfc_path = f'rfc{rfc_number}.txt'
+            with open(rfc_path, 'r') as file:
+                data = file.read()
+                response = f"P2P-CI/1.0 200 OK\r\nDate: {self.get_date()}\r\nOS: {self.get_os()}\r\nContent-Length: {len(data)}\r\nContent-Type: text/plain\r\n\r\n{data}"
+        except FileNotFoundError:
+            print(f"RFC {rfc_number} not found.")
             response = "P2P-CI/1.0 404 Not Found\r\n\r\n"
+        except Exception as e:
+            print(f"Error reading RFC {rfc_number}: {e}")
+            response = "P2P-CI/1.0 500 Internal Server Error\r\n\r\n"
         return response
 
     # Helper methods to get the current date and server OS
